@@ -1,0 +1,14 @@
+var abc = "123";
+var b = 123.456;
+// This is a comment
+while (b > 0) {
+    b -= 1;
+    print b;
+}
+// This is a second comment
+/* This is
+a multi-line
+comment */
+for (var a = 0; a < 10; a += 1) {
+
+}

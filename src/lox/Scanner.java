@@ -14,6 +14,7 @@ public class Scanner {
     private int start = 0;
     private int current = 0;
     private int line = 1;
+    private boolean isMultilineComment = false;
 
     private static final Map<String, TokenType> keywords;
 
@@ -48,12 +49,23 @@ public class Scanner {
             scanToken();
         }
 
+        if (isMultilineComment) {
+            Lox.error(line, "Unterminated multi line comment");
+        }
+
         tokens.add(new Token(EOF, "", null, line));
         return tokens;
     }
 
     private void scanToken() {
         char c = advance();
+
+        // Still inside multiline comment block.
+        if (isMultilineComment && c != '*') {
+            if (c == '\n') line++;
+            return;
+        }
+
         switch (c) {
             case '(':
                 addToken(LEFT_PAREN);
@@ -83,7 +95,16 @@ public class Scanner {
                 addToken(SEMICOLON);
                 break;
             case '*':
-                addToken(STAR);
+                if (match('/')) {
+                    // End of multi line comment.
+                    if (!isMultilineComment) {
+                        Lox.error(line, "Unexpected end of multi line comment block");
+                    } else {
+                        isMultilineComment = false;
+                    }
+                } else {
+                    addToken(STAR);
+                }
                 break;
             case '!':
                 addToken(match('=') ? BANG_EQUAL : BANG);
@@ -101,6 +122,9 @@ public class Scanner {
                 if (match('/')) {
                     // A comment goes until the end of the line.
                     while (peek() != '\n' && !isAtEnd()) advance();
+                } else if (match('*')) {
+                    // Beginning of multi line comment.
+                    isMultilineComment = true;
                 } else {
                     addToken(SLASH);
                 }
